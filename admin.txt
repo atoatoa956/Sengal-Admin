@@ -76,7 +76,7 @@ local function startFly()
         end
         BodyGyro.CFrame = camCF
     end)
-    notify("Fly aktif!")
+    notify("Fly enabled!")
 end
 
 local function stopFly()
