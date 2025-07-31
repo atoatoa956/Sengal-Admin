@@ -27,7 +27,7 @@ TextBox.Position = UDim2.new(0, 5, 0, 5)
 TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextBox.TextScaled = true
-TextBox.PlaceholderText = "Komut girin (örn: /fly)"
+TextBox.PlaceholderText = "Enter command (example: /fly)"
 TextBox.ClearTextOnFocus = false
 TextBox.Font = Enum.Font.Gotham
 
