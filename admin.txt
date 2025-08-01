@@ -7,7 +7,7 @@ local Char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HRP = Char:WaitForChild("HumanoidRootPart")
 local Humanoid = Char:FindFirstChildOfClass("Humanoid")
 
--- --- Arayüz --- --
+-- --- UI --- --
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SengalAdminGUI"
 ScreenGui.Parent = game.CoreGui
@@ -17,7 +17,6 @@ Frame.Size = UDim2.new(0, 350, 0, 50)
 Frame.Position = UDim2.new(0, 20, 0, 100)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.BorderSizePixel = 0
-Frame.AnchorPoint = Vector2.new(0, 0)
 Frame.Active = true
 Frame.Draggable = true
 
@@ -27,11 +26,11 @@ TextBox.Position = UDim2.new(0, 5, 0, 5)
 TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextBox.TextScaled = true
-TextBox.PlaceholderText = "Enter command (example: /fly)"
+TextBox.PlaceholderText = "Enter command (example: fly)"
 TextBox.ClearTextOnFocus = false
 TextBox.Font = Enum.Font.Gotham
 
--- --- Bildirim fonksiyonu --- --
+-- --- Notify --- --
 local function notify(text)
     game.StarterGui:SetCore("SendNotification", {
         Title = "Sengal Admin Pro V5";
@@ -40,8 +39,9 @@ local function notify(text)
     })
 end
 
--- --- Fly sistemi --- --
+-- --- Fly --- --
 local flying = false
+local flySpeed = 50
 local BodyGyro, BodyVelocity
 local flyConn
 
@@ -70,9 +70,9 @@ local function startFly()
         if UIS:IsKeyDown(Enum.KeyCode.D) then moveVec += camCF.RightVector end
 
         if moveVec.Magnitude > 0 then
-            BodyVelocity.Velocity = moveVec.Unit * 50
+            BodyVelocity.Velocity = moveVec.Unit * flySpeed
         else
-            BodyVelocity.Velocity = Vector3.new(0,0,0)
+            BodyVelocity.Velocity = Vector3.new(0, 0, 0)
         end
         BodyGyro.CFrame = camCF
     end)
@@ -83,14 +83,11 @@ local function stopFly()
     flying = false
     if BodyGyro then BodyGyro:Destroy() end
     if BodyVelocity then BodyVelocity:Destroy() end
-    if flyConn then
-        flyConn:Disconnect()
-        flyConn = nil
-    end
-    notify("Fly closed!")
+    if flyConn then flyConn:Disconnect() end
+    notify("Fly disabled!")
 end
 
--- --- Noclip sistemi --- --
+-- --- Noclip --- --
 local noclip = false
 RunService.Stepped:Connect(function()
     if noclip then
@@ -102,7 +99,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- --- ESP sistemi --- --
+-- --- ESP --- --
 local espActive = false
 local espObjects = {}
 
@@ -129,7 +126,7 @@ local function toggleESP()
                 table.insert(espObjects, billboard)
             end
         end
-        notify("ESP opened!")
+        notify("ESP enabled!")
     else
         for _, obj in pairs(espObjects) do
             if obj and obj.Parent then
@@ -137,11 +134,11 @@ local function toggleESP()
             end
         end
         espObjects = {}
-        notify("ESP closed!")
+        notify("ESP disabled!")
     end
 end
 
--- --- Görünmezlik --- --
+-- --- Invisible / Visible --- --
 local function makeInvisible()
     for _, part in pairs(Char:GetDescendants()) do
         if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
@@ -150,7 +147,7 @@ local function makeInvisible()
             part.Transparency = 1
         end
     end
-    notify("İnvisible!")
+    notify("Invisible!")
 end
 
 local function makeVisible()
@@ -164,87 +161,97 @@ local function makeVisible()
     notify("Visible!")
 end
 
--- --- Komut işleyici --- --
+-- --- Command Handler --- --
 TextBox.FocusLost:Connect(function(enterPressed)
     if not enterPressed then return end
     local text = TextBox.Text
     TextBox.Text = ""
     local args = {}
     for word in text:gmatch("%S+") do
-        table.insert(args, word)
+        table.insert(args, word:lower())
     end
 
     if #args == 0 then return end
 
-    local cmd = args[1]:lower()
+    local cmd = args[1]
     table.remove(args,1)
 
-    if cmd == "/fly" then
+    if cmd == "fly" then
         startFly()
-    elseif cmd == "/unfly" then
+    elseif cmd == "unfly" then
         stopFly()
-    elseif cmd == "/noclip" then
+    elseif cmd == "flyspeed" then
+        local val = tonumber(args[1])
+        if val then
+            flySpeed = val
+            notify("Fly speed set to: "..val)
+        else
+            notify("Invalid flyspeed!")
+        end
+    elseif cmd == "noclip" then
         noclip = true
         notify("Noclip enabled!")
-    elseif cmd == "/clip" then
+    elseif cmd == "clip" then
         noclip = false
-        notify("Noclip closed!")
-    elseif cmd == "/tools" then
+        notify("Noclip disabled!")
+    elseif cmd == "tools" then
         for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
             tool.Parent = Char
         end
-        notify("Tools gived!")
-    elseif cmd == "/speed" then
+        notify("Tools equipped!")
+    elseif cmd == "speed" then
         local speed = tonumber(args[1])
         if speed and Humanoid then
             Humanoid.WalkSpeed = speed
-            notify("Speed setted: "..speed)
+            notify("Speed set to: "..speed)
         else
-            notify("İnvalid speed!")
+            notify("Invalid speed!")
         end
-    elseif cmd == "/esp" then
+    elseif cmd == "esp" then
         toggleESP()
-    elseif cmd == "/invisible" then
+    elseif cmd == "invisible" then
         makeInvisible()
-    elseif cmd == "/visible" then
+    elseif cmd == "visible" then
         makeVisible()
-    elseif cmd == "/jump" then
+    elseif cmd == "jump" then
         if Humanoid then
             Humanoid.Jump = true
             notify("Jumped!")
         end
-    elseif cmd == "/sit" then
+    elseif cmd == "sit" then
         if Humanoid then
             Humanoid.Sit = true
-            notify("Sit!")
+            notify("Sitting!")
         end
-    elseif cmd == "/goto" then
+    elseif cmd == "goto" then
         local targetName = args[1]
-        if not targetName then notify("Specify target!") return end
+        if not targetName then notify("Specify a player name!") return end
         local target = Players:FindFirstChild(targetName)
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            HRP.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
-            notify("Going: "..targetName)
+            HRP.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
+            notify("Teleported to "..targetName)
         else
-            notify("Player not found: "..targetName)
+            notify("Player not found!")
         end
-    elseif cmd == "/bring" then
+    elseif cmd == "bring" then
         local targetName = args[1]
-        if not targetName then notify("Specify target!") return end
+        if not targetName then notify("Specify a player name!") return end
         local target = Players:FindFirstChild(targetName)
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            target.Character.HumanoidRootPart.CFrame = HRP.CFrame + Vector3.new(2,0,0)
-            notify("Brought: "..targetName)
+            target.Character.HumanoidRootPart.CFrame = HRP.CFrame + Vector3.new(2, 0, 0)
+            notify("Brought "..targetName.." to you.")
         else
-            notify("Player not found: "..targetName)
+            notify("Player not found!")
         end
-    elseif cmd == "/reset" then
+    elseif cmd == "reset" then
         if Humanoid then
             Humanoid.Health = 0
         end
+    elseif cmd == "help" then
+        notify("Commands: fly, unfly, flyspeed [value], noclip, clip, tools, speed [value], esp, invisible, visible, jump, sit, goto [player], bring [player], reset")
     else
         notify("Unknown command: "..cmd)
     end
 end)
 
-notify("Sengal Admin Pro V5 is installed! For commands, type / in the textbox and press enter.")
+notify("Sengal Admin Pro V5 loaded. Type a command and press Enter.")
